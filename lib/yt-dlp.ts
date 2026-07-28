@@ -77,11 +77,11 @@ export async function getVideoInfo(url: string): Promise<VideoInfo> {
 
     const ytDlp = spawn("yt-dlp", ["--dump-json", "--no-playlist", url], { env: getSpawnEnv() });
     
-    // Set a 15-second timeout to prevent the process from hanging indefinitely
+    // Set a 45-second timeout to prevent the process from hanging indefinitely
     const timeout = setTimeout(() => {
       ytDlp.kill("SIGKILL");
       reject(new Error("Video retrieval timed out. YouTube took too long to respond."));
-    }, 15000);
+    }, 45000);
     
     let stdout = "";
     let stderr = "";
