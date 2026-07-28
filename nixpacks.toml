@@ -1,5 +1,0 @@
-# Nixpacks configuration for Railway / Render deployments
-# Installs ffmpeg, python3, and yt-dlp automatically in the build environment
-
-[phases.setup]
-nixPkgs = ["...", "ffmpeg", "python3", "yt-dlp"]
