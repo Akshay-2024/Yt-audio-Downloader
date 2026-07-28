@@ -44,14 +44,28 @@ function formatDuration(seconds?: number): string {
 
 function getSpawnEnv(): NodeJS.ProcessEnv {
   const spawnEnv = { ...process.env };
+  const pathKey = Object.keys(spawnEnv).find(k => k.toLowerCase() === "path") || "PATH";
+  let currentPath = spawnEnv[pathKey] || "";
+
+  // Add custom FFmpeg path if it exists
   const customFfmpegPath = "C:\\ffmpeg-8.0.1-essentials_build\\bin";
-  if (fs.existsSync(customFfmpegPath)) {
-    const pathKey = Object.keys(spawnEnv).find(k => k.toLowerCase() === "path") || "PATH";
-    const currentPath = spawnEnv[pathKey] || "";
-    if (!currentPath.includes(customFfmpegPath)) {
-      spawnEnv[pathKey] = `${customFfmpegPath};${currentPath}`;
-    }
+  if (fs.existsSync(customFfmpegPath) && !currentPath.includes(customFfmpegPath)) {
+    currentPath = `${customFfmpegPath};${currentPath}`;
   }
+
+  // Add custom Python Scripts path (where yt-dlp is located) if it exists
+  const customPythonScriptsPath = "C:\\Users\\1aksh\\AppData\\Local\\Programs\\Python\\Python313\\Scripts";
+  if (fs.existsSync(customPythonScriptsPath) && !currentPath.includes(customPythonScriptsPath)) {
+    currentPath = `${customPythonScriptsPath};${currentPath}`;
+  }
+
+  // Add standard fallback paths where Python scripts might be installed for 1aksh
+  const fallbackPythonPath = "C:\\Users\\1aksh\\AppData\\Roaming\\Python\\Python313\\Scripts";
+  if (fs.existsSync(fallbackPythonPath) && !currentPath.includes(fallbackPythonPath)) {
+    currentPath = `${fallbackPythonPath};${currentPath}`;
+  }
+
+  spawnEnv[pathKey] = currentPath;
   return spawnEnv;
 }
 
