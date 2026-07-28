@@ -75,7 +75,12 @@ export async function getVideoInfo(url: string): Promise<VideoInfo> {
       return reject(new Error("Invalid YouTube URL"));
     }
 
-    const ytDlp = spawn("yt-dlp", ["--dump-json", "--no-playlist", url], { env: getSpawnEnv() });
+    const args = ["--dump-json", "--no-playlist", url];
+    if (process.env.PROXY_URL) {
+      args.push("--proxy", process.env.PROXY_URL);
+    }
+
+    const ytDlp = spawn("yt-dlp", args, { env: getSpawnEnv() });
     
     // Set a 45-second timeout to prevent the process from hanging indefinitely
     const timeout = setTimeout(() => {
@@ -176,6 +181,11 @@ export function downloadAudio(
     // Set output template. We'll use fileId as the base name.
     const outputPath = path.join(tempDir, `${fileId}.%(ext)s`);
     args.push("-o", outputPath);
+
+    // Add proxy if configured
+    if (process.env.PROXY_URL) {
+      args.push("--proxy", process.env.PROXY_URL);
+    }
     
     // Add URL
     args.push(url);
