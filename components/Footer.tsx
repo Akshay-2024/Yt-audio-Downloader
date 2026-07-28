@@ -52,7 +52,7 @@ export default function Footer() {
         <div className="mt-8 flex flex-col items-center justify-between gap-4 border-t border-white/[0.03] pt-8 sm:flex-row text-xs text-zinc-500">
           <p>© {currentYear} YT Audio Downloader. All rights reserved.</p>
           <p className="flex items-center gap-1">
-            Made with <Heart className="h-3 w-3 text-red-500 fill-red-500" /> & Next.js 16
+            Made with <Heart className="h-3 w-3 text-red-500 fill-red-500" />
           </p>
         </div>
       </div>

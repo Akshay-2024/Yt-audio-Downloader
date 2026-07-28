@@ -1,9 +1,10 @@
 import { spawn, exec } from "child_process";
 import path from "path";
 import fs from "fs";
+import os from "os";
 import { VideoInfo, AudioFormat, AudioQuality } from "../types";
 
-export const tempDir = path.join(process.cwd(), "temp-downloads");
+export const tempDir = path.join(os.tmpdir(), "yt-audio-downloads");
 
 // Ensure the temporary directory exists
 if (!fs.existsSync(tempDir)) {
