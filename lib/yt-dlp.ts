@@ -75,7 +75,7 @@ export async function getVideoInfo(url: string): Promise<VideoInfo> {
       return reject(new Error("Invalid YouTube URL"));
     }
 
-    const args = ["--dump-json", "--no-playlist", url];
+    const args = ["--dump-json", "--no-playlist", "--impersonate", "chrome", url];
     if (process.env.PROXY_URL) {
       args.push("--proxy", process.env.PROXY_URL);
     }
@@ -172,6 +172,7 @@ export function downloadAudio(
       "-f", format === "m4a" ? "ba[ext=m4a]/bestaudio" : "bestaudio",
       "-x",
       "--audio-format", format,
+      "--impersonate", "chrome",
     ];
 
     if (format === "mp3") {
