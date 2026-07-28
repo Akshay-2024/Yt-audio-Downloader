@@ -63,6 +63,12 @@ export async function getVideoInfo(url: string): Promise<VideoInfo> {
 
     const ytDlp = spawn("yt-dlp", ["--dump-json", "--no-playlist", url], { env: getSpawnEnv() });
     
+    // Set a 15-second timeout to prevent the process from hanging indefinitely
+    const timeout = setTimeout(() => {
+      ytDlp.kill("SIGKILL");
+      reject(new Error("Video retrieval timed out. YouTube took too long to respond."));
+    }, 15000);
+    
     let stdout = "";
     let stderr = "";
 
@@ -74,7 +80,14 @@ export async function getVideoInfo(url: string): Promise<VideoInfo> {
       stderr += data.toString();
     });
 
+    ytDlp.on("error", (err) => {
+      clearTimeout(timeout);
+      console.error("Failed to start yt-dlp process:", err);
+      reject(new Error("yt-dlp executable not found on the server. Please ensure yt-dlp is installed and in the system path."));
+    });
+
     ytDlp.on("close", (code) => {
+      clearTimeout(timeout);
       if (code !== 0) {
         console.error(`yt-dlp metadata failed with exit code ${code}. Stderr: ${stderr}`);
         
@@ -90,6 +103,8 @@ export async function getVideoInfo(url: string): Promise<VideoInfo> {
           reject(new Error("This URL is not supported by yt-dlp."));
         } else if (errLower.includes("network") || errLower.includes("connection")) {
           reject(new Error("Network error while reaching YouTube. Please try again."));
+        } else if (errLower.includes("403") || errLower.includes("forbidden") || errLower.includes("captcha") || errLower.includes("robot") || errLower.includes("block")) {
+          reject(new Error("Access blocked by YouTube. The hosted server's IP address is blocked. Please run the application locally or configure a proxy."));
         } else {
           reject(new Error("Failed to retrieve video information. Please check the URL and try again."));
         }
@@ -154,6 +169,12 @@ export function downloadAudio(
     console.log(`Spawning: yt-dlp ${args.join(" ")}`);
     const proc = spawn("yt-dlp", args, { env: getSpawnEnv() });
 
+    // Set a 3-minute timeout to prevent downloading/transcoding from hanging forever
+    const timeout = setTimeout(() => {
+      proc.kill("SIGKILL");
+      reject(new Error("Audio download/conversion timed out. The process took too long."));
+    }, 180000);
+
     let progressPercent = 0;
     let currentStep = "Fetching metadata...";
     let stderr = "";
@@ -187,7 +208,14 @@ export function downloadAudio(
       stderr += data.toString();
     });
 
+    proc.on("error", (err) => {
+      clearTimeout(timeout);
+      console.error("Failed to start yt-dlp process:", err);
+      reject(new Error("yt-dlp executable not found on the server. Please ensure yt-dlp is installed and in the system path."));
+    });
+
     proc.on("close", (code) => {
+      clearTimeout(timeout);
       if (code !== 0) {
         console.error(`yt-dlp download failed: code ${code}, stderr: ${stderr}`);
         reject(new Error("Audio extraction or conversion failed."));
