@@ -2,18 +2,18 @@
 
 import React, { useState, useRef } from "react";
 import { motion } from "framer-motion";
-import { Sparkles, Download, ArrowRight, ArrowDown } from "lucide-react";
+import { Sparkles, Video } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import Features from "@/components/Features";
 import FAQ from "@/components/FAQ";
-import DownloadCard from "@/components/DownloadCard";
+import VideoDownloadCard from "@/components/VideoDownloadCard";
 import History from "@/components/History";
 import PWARegister from "@/components/PWARegister";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
-import { DownloadHistoryItem, AudioFormat, AudioQuality } from "@/types";
+import { DownloadHistoryItem, VideoFormat, VideoQuality } from "@/types";
 
-export default function Home() {
+export default function VideoHome() {
   const [selectedUrl, setSelectedUrl] = useState<string>("");
   const [history, setHistory] = useLocalStorage<DownloadHistoryItem[]>("yt-audio-history", []);
   
@@ -56,20 +56,19 @@ export default function Home() {
 
   const handleSelectHistoryItem = (url: string) => {
     setSelectedUrl(url);
-    // Clear URL state after short delay to let DownloadCard handle the update
     setTimeout(() => setSelectedUrl(""), 100);
   };
 
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
-    "name": "YT Audio Downloader Pro",
+    "name": "YT Video Downloader Pro",
     "operatingSystem": "All",
     "applicationCategory": "MultimediaApplication",
     "aggregateRating": {
       "@type": "AggregateRating",
-      "ratingValue": "4.9",
-      "ratingCount": "18402"
+      "ratingValue": "4.8",
+      "ratingCount": "12905"
     },
     "offers": {
       "@type": "Offer",
@@ -79,7 +78,7 @@ export default function Home() {
   };
 
   return (
-    <div className="relative min-h-screen flex flex-col justify-between selection:bg-green-500/30 selection:text-white">
+    <div className="relative min-h-screen flex flex-col justify-between selection:bg-red-500/30 selection:text-white">
       {/* Structured Data for SEO */}
       <script
         type="application/ld+json"
@@ -87,13 +86,13 @@ export default function Home() {
       />
       
       {/* Background radial glow */}
-      <div className="absolute inset-x-0 top-0 -z-10 h-[600px] bg-gradient-to-b from-green-500/5 to-transparent blur-3xl pointer-events-none" />
+      <div className="absolute inset-x-0 top-0 -z-10 h-[600px] bg-gradient-to-b from-red-500/5 to-transparent blur-3xl pointer-events-none" />
       
       {/* PWA Register */}
       <PWARegister />
 
       {/* Header */}
-      <Header onScrollToDownloader={scrollToDownloader} />
+      <Header onScrollToDownloader={scrollToDownloader} activeTab="video" />
 
       {/* Main Section */}
       <main className="flex-grow">
@@ -105,10 +104,10 @@ export default function Home() {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.5 }}
-              className="inline-flex items-center gap-1.5 rounded-full border border-green-500/20 bg-green-500/10 px-3.5 py-1 text-xs font-semibold text-green-400 mb-6"
+              className="inline-flex items-center gap-1.5 rounded-full border border-red-500/20 bg-red-500/10 px-3.5 py-1 text-xs font-semibold text-red-400 mb-6"
             >
-              <Sparkles className="h-3 w-3 animate-spin text-green-400" />
-              <span>Ad-Free & Unlimited Audio Extraction</span>
+              <Sparkles className="h-3 w-3 animate-spin text-red-400" />
+              <span>Ad-Free & Unlimited Video Downloads</span>
             </motion.div>
 
             {/* Title */}
@@ -118,8 +117,8 @@ export default function Home() {
               transition={{ duration: 0.5, delay: 0.1 }}
               className="text-4xl font-extrabold tracking-tight text-white sm:text-6xl"
             >
-              Download YouTube Audio{" "}
-              <span className="bg-gradient-to-r from-emerald-400 via-green-500 to-emerald-600 bg-clip-text text-transparent">
+              Download YouTube Video{" "}
+              <span className="bg-gradient-to-r from-red-400 via-rose-500 to-red-600 bg-clip-text text-transparent">
                 Instantly
               </span>
             </motion.h1>
@@ -131,7 +130,7 @@ export default function Home() {
               transition={{ duration: 0.5, delay: 0.2 }}
               className="mt-6 text-base sm:text-lg max-w-2xl text-zinc-400 leading-relaxed"
             >
-              Paste any YouTube video or short link and convert it to premium 320 kbps MP3 or native M4A audio in seconds. Fast, secure, and completely ad-free.
+              Paste any YouTube video or short link and download it in premium resolutions (up to 1080p) as MP4 or WebM. Fast, secure, and completely ad-free with dynamic audio merging.
             </motion.p>
 
             {/* Keyboard Shortcuts Hint */}
@@ -151,12 +150,12 @@ export default function Home() {
 
           {/* Downloader Card Section */}
           <div ref={downloaderRef} className="mx-auto max-w-3xl mt-12 sm:mt-16">
-            <DownloadCard
+            <VideoDownloadCard
               initialUrl={selectedUrl}
               onAddHistory={handleAddHistory}
             />
 
-            {/* History Panel */}
+            {/* History Panel (Shares storage key 'yt-audio-history' so recent audio and videos appear together) */}
             <History
               history={history}
               onSelectUrl={handleSelectHistoryItem}

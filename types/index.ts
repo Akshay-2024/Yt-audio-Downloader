@@ -14,6 +14,10 @@ export type AudioQuality = "128" | "192" | "256" | "320";
 
 export type AudioFormat = "mp3" | "m4a";
 
+export type VideoQuality = "360" | "480" | "720" | "1080";
+
+export type VideoFormat = "mp4" | "webm";
+
 export type DownloadStep =
   | "idle"
   | "validate"
@@ -39,9 +43,10 @@ export interface DownloadHistoryItem {
   durationString: string;
   thumbnail: string;
   downloadedAt: number; // timestamp
-  format: AudioFormat;
-  quality: AudioQuality;
+  format: AudioFormat | VideoFormat;
+  quality: AudioQuality | VideoQuality;
   fileId: string;
+  type: "audio" | "video";
 }
 
 export interface FAQItem {

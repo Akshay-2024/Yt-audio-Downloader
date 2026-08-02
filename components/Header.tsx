@@ -1,15 +1,17 @@
 "use client";
 
 import React from "react";
-import { Music, Sun, Moon } from "lucide-react";
+import { Music, Video, Sun, Moon } from "lucide-react";
 import { motion } from "framer-motion";
 import toast from "react-hot-toast";
+import Link from "next/link";
 
 interface HeaderProps {
   onScrollToDownloader: () => void;
+  activeTab?: "audio" | "video";
 }
 
-export default function Header({ onScrollToDownloader }: HeaderProps) {
+export default function Header({ onScrollToDownloader, activeTab = "audio" }: HeaderProps) {
   const toggleTheme = () => {
     toast.success("Premium dark mode is active by default!", {
       icon: "🌙",
@@ -22,6 +24,8 @@ export default function Header({ onScrollToDownloader }: HeaderProps) {
     });
   };
 
+  const isVideo = activeTab === "video";
+
   return (
     <motion.header
       initial={{ y: -20, opacity: 0 }}
@@ -31,26 +35,50 @@ export default function Header({ onScrollToDownloader }: HeaderProps) {
     >
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         {/* Logo */}
-        <div className="flex items-center gap-2">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-400 to-green-600 shadow-lg shadow-green-500/20">
-            <Music className="h-5 w-5 text-white animate-pulse" />
+        <Link href={isVideo ? "/video" : "/"} className="flex items-center gap-2 hover:opacity-90 transition-opacity">
+          <div className={`flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br shadow-lg ${
+            isVideo 
+              ? "from-red-500 to-rose-600 shadow-red-500/20" 
+              : "from-emerald-400 to-green-600 shadow-green-500/20"
+          }`}>
+            {isVideo ? (
+              <Video className="h-5 w-5 text-white animate-pulse" />
+            ) : (
+              <Music className="h-5 w-5 text-white animate-pulse" />
+            )}
           </div>
           <span className="bg-gradient-to-r from-white via-zinc-200 to-zinc-400 bg-clip-text text-xl font-bold tracking-tight text-transparent">
-            YT Audio
+            {isVideo ? "YT Video" : "YT Audio"}
           </span>
-          <span className="hidden sm:inline-block rounded-full border border-green-500/30 bg-green-500/10 px-2 py-0.5 text-xs font-medium text-green-400">
+          <span className={`hidden sm:inline-block rounded-full border px-2 py-0.5 text-xs font-medium ${
+            isVideo 
+              ? "border-red-500/30 bg-red-500/10 text-red-400" 
+              : "border-green-500/30 bg-green-500/10 text-green-400"
+          }`}>
             Pro
           </span>
-        </div>
+        </Link>
 
         {/* Navigation Links */}
         <nav className="hidden md:flex items-center gap-8">
-          <a
-            href="#"
-            className="text-sm font-medium text-zinc-400 transition-colors hover:text-white"
+          <Link
+            href="/"
+            className={`text-sm font-semibold transition-colors flex items-center gap-1.5 ${
+              !isVideo ? "text-green-400" : "text-zinc-400 hover:text-white"
+            }`}
           >
-            Home
-          </a>
+            <Music className="h-4 w-4" />
+            Audio Downloader
+          </Link>
+          <Link
+            href="/video"
+            className={`text-sm font-semibold transition-colors flex items-center gap-1.5 ${
+              isVideo ? "text-red-400" : "text-zinc-400 hover:text-white"
+            }`}
+          >
+            <Video className="h-4 w-4" />
+            Video Downloader
+          </Link>
           <a
             href="#features"
             className="text-sm font-medium text-zinc-400 transition-colors hover:text-white"
@@ -100,7 +128,11 @@ export default function Header({ onScrollToDownloader }: HeaderProps) {
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={onScrollToDownloader}
-            className="flex h-9 items-center justify-center rounded-xl bg-gradient-to-r from-emerald-500 to-green-600 px-4 text-sm font-semibold text-white shadow-lg shadow-green-500/20 transition-all hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 focus:ring-offset-[#09090B]"
+            className={`flex h-9 items-center justify-center rounded-xl bg-gradient-to-r px-4 text-sm font-semibold text-white shadow-lg transition-all hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#09090B] ${
+              isVideo
+                ? "from-red-500 to-rose-600 shadow-red-500/20 focus:ring-red-500"
+                : "from-emerald-500 to-green-600 shadow-green-500/20 focus:ring-green-500"
+            }`}
           >
             Download Now
           </motion.button>

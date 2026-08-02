@@ -90,13 +90,32 @@ export default function History({
                     {item.uploader}
                   </p>
                   <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                    <span className="inline-flex items-center gap-1 rounded-md bg-zinc-800/80 px-1.5 py-0.5 text-[10px] font-semibold text-zinc-400 border border-white/[0.03]">
+                      {item.type === "video" ? (
+                        <>
+                          <span className="h-1.5 w-1.5 rounded-full bg-rose-500 animate-pulse" />
+                          Video
+                        </>
+                      ) : (
+                        <>
+                          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                          Audio
+                        </>
+                      )}
+                    </span>
                     <span className="inline-flex items-center rounded-md bg-zinc-800 px-1.5 py-0.5 text-[10px] font-medium text-zinc-400 border border-white/[0.03]">
                       {item.format.toUpperCase()}
                     </span>
-                    {item.format === "mp3" && (
+                    {item.type === "video" ? (
                       <span className="inline-flex items-center rounded-md bg-zinc-850 px-1.5 py-0.5 text-[10px] font-medium text-zinc-500 border border-white/[0.03]">
-                        {item.quality} kbps
+                        {item.quality}p
                       </span>
+                    ) : (
+                      item.format === "mp3" && (
+                        <span className="inline-flex items-center rounded-md bg-zinc-850 px-1.5 py-0.5 text-[10px] font-medium text-zinc-500 border border-white/[0.03]">
+                          {item.quality} kbps
+                        </span>
+                      )
                     )}
                     <span className="text-[10px] text-zinc-500">
                       {formatDate(item.downloadedAt)}

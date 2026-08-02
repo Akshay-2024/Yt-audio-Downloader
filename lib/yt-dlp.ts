@@ -2,7 +2,7 @@ import { spawn, exec } from "child_process";
 import path from "path";
 import fs from "fs";
 import os from "os";
-import { VideoInfo, AudioFormat, AudioQuality } from "../types";
+import { VideoInfo, AudioFormat, AudioQuality, VideoFormat, VideoQuality } from "../types";
 
 export const tempDir = path.join(os.tmpdir(), "yt-audio-downloads");
 
@@ -274,6 +274,113 @@ export function downloadAudio(
           resolve(matchingFile);
         } else {
           reject(new Error("Output file could not be found."));
+        }
+      }
+    });
+  });
+}
+
+export function downloadVideo(
+  url: string,
+  format: VideoFormat,
+  quality: VideoQuality,
+  fileId: string,
+  onProgress: (percent: number, step: string) => void
+): Promise<string> {
+  return new Promise((resolve, reject) => {
+    // Select best video stream up to quality, and merge with best audio into format
+    const formatSpec = format === "mp4" 
+      ? `bv*[height<=${quality}][ext=mp4]+ba[ext=m4a]/b[height<=${quality}][ext=mp4]/best`
+      : `bv*[height<=${quality}][ext=webm]+ba/b[height<=${quality}][ext=webm]/best`;
+
+    const args = [
+      "-f", formatSpec,
+      "--merge-output-format", format,
+    ];
+
+    // Only use browser impersonation on Linux/production environments (non-Windows)
+    if (process.platform !== "win32") {
+      args.push("--impersonate", "chrome");
+    }
+
+    // Set output template. We'll use fileId as the base name.
+    const outputPath = path.join(tempDir, `${fileId}.%(ext)s`);
+    args.push("-o", outputPath);
+
+    // Add proxy if configured
+    if (process.env.PROXY_URL) {
+      args.push("--proxy", process.env.PROXY_URL);
+    }
+    
+    // Add URL
+    args.push(url);
+
+    console.log(`Spawning: yt-dlp ${args.join(" ")}`);
+    const proc = spawn("yt-dlp", args, { env: getSpawnEnv() });
+
+    // Set a 5-minute timeout to prevent downloading/transcoding from hanging forever
+    const timeout = setTimeout(() => {
+      proc.kill("SIGKILL");
+      reject(new Error("Video download/conversion timed out. The process took too long."));
+    }, 300000);
+
+    let progressPercent = 0;
+    let currentStep = "Fetching metadata...";
+    let stderr = "";
+
+    proc.stdout.on("data", (data) => {
+      const line = data.toString();
+      
+      // Parse progress percent from download log
+      // Format: [download]  12.3% of 10.00MiB...
+      const downloadMatch = line.match(/\[download\]\s+(\d+(?:\.\d+)?)%/);
+      if (downloadMatch) {
+        progressPercent = parseFloat(downloadMatch[1]);
+        // Map 0-100% of download to 0-85% of our visual progress bar
+        const scaledPercent = Math.round(progressPercent * 0.85);
+        currentStep = `Downloading video... (${progressPercent.toFixed(1)}%)`;
+        onProgress(scaledPercent, currentStep);
+      }
+
+      // Detect merging/ffmpeg step
+      if (line.includes("[Merger]") || line.includes("[VideoConvertor]") || line.includes("[ffmpeg]")) {
+        currentStep = "Merging audio/video tracks...";
+        onProgress(90, currentStep);
+      }
+    });
+
+    proc.stderr.on("data", (data) => {
+      stderr += data.toString();
+    });
+
+    proc.on("error", (err) => {
+      clearTimeout(timeout);
+      console.error("Failed to start yt-dlp process:", err);
+      reject(new Error("yt-dlp executable not found on the server. Please ensure yt-dlp is installed and in the system path."));
+    });
+
+    proc.on("close", (code) => {
+      clearTimeout(timeout);
+      if (code !== 0) {
+        console.error(`yt-dlp download failed: code ${code}, stderr: ${stderr}`);
+        reject(new Error("Video download or merging failed."));
+        return;
+      }
+
+      // Check if file exists in tempDir with the expected extension
+      const finalFilePath = path.join(tempDir, `${fileId}.${format}`);
+      if (fs.existsSync(finalFilePath)) {
+        onProgress(100, "Finished");
+        resolve(`${fileId}.${format}`);
+      } else {
+        // Look for any file starting with fileId in the tempDir
+        const files = fs.readdirSync(tempDir);
+        const matchingFile = files.find(f => f.startsWith(fileId));
+        if (matchingFile) {
+          onProgress(100, "Finished");
+          resolve(matchingFile);
+        } else {
+          reject(new Error("Output video file could not be found."));
         }
       }
     });

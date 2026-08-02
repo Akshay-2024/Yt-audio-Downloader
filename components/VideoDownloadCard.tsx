@@ -16,13 +16,13 @@ import {
   Eye,
   Calendar,
   Share2,
-  Radio,
+  Play,
 } from "lucide-react";
 import toast from "react-hot-toast";
-import { VideoInfo, AudioFormat, AudioQuality, VideoFormat, VideoQuality, DownloadStep, DownloadProgress } from "../types";
+import { VideoInfo, VideoFormat, VideoQuality, DownloadStep, DownloadProgress } from "../types";
 import { validateYoutubeUrl } from "@/lib/validation";
 
-interface DownloadCardProps {
+interface VideoDownloadCardProps {
   initialUrl?: string;
   onAddHistory: (item: {
     id: string;
@@ -30,21 +30,21 @@ interface DownloadCardProps {
     uploader: string;
     durationString: string;
     thumbnail: string;
-    format: AudioFormat | VideoFormat;
-    quality: AudioQuality | VideoQuality;
+    format: VideoFormat;
+    quality: VideoQuality;
     fileId: string;
     type: "audio" | "video";
   }) => void;
 }
 
-export default function DownloadCard({ initialUrl = "", onAddHistory }: DownloadCardProps) {
+export default function VideoDownloadCard({ initialUrl = "", onAddHistory }: VideoDownloadCardProps) {
   const [url, setUrl] = useState(initialUrl);
   const [step, setStep] = useState<DownloadStep>("idle");
   const [metadata, setMetadata] = useState<VideoInfo | null>(null);
   
   // Downloader Settings
-  const [format, setFormat] = useState<AudioFormat>("mp3");
-  const [quality, setQuality] = useState<AudioQuality>("320");
+  const [format, setFormat] = useState<VideoFormat>("mp4");
+  const [quality, setQuality] = useState<VideoQuality>("720");
   
   // Progress and errors
   const [progress, setProgress] = useState<number>(0);
@@ -58,12 +58,11 @@ export default function DownloadCard({ initialUrl = "", onAddHistory }: Download
   // References
   const eventSourceRef = useRef<EventSource | null>(null);
 
-  // Sync initial URL if updated from parent (e.g. history clicks)
+  // Sync initial URL if updated from parent
   useEffect(() => {
     if (initialUrl) {
       setUrl(initialUrl);
       handleFetch(initialUrl);
-      // Scroll to the card
       const element = document.getElementById("downloader-card");
       if (element) {
         element.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -116,7 +115,6 @@ export default function DownloadCard({ initialUrl = "", onAddHistory }: Download
         if (text) {
           setUrl(text);
           toast.success("Pasted from clipboard!");
-          // Auto-fetch if it's a valid youtube URL
           if (validateYoutubeUrl(text)) {
             handleFetch(text);
           }
@@ -168,16 +166,15 @@ export default function DownloadCard({ initialUrl = "", onAddHistory }: Download
   const startDownload = async () => {
     if (!metadata) return;
     
-    // Close existing connection if any
     if (eventSourceRef.current) {
       eventSourceRef.current.close();
     }
 
     setStep("downloading");
     setProgress(0);
-    setProgressMessage("Connecting to downloader server...");
+    setProgressMessage("Connecting to video downloader server...");
 
-    const downloadUrl = `/api/download?url=${encodeURIComponent(metadata.url)}&format=${format}&quality=${quality}`;
+    const downloadUrl = `/api/download/video?url=${encodeURIComponent(metadata.url)}&format=${format}&quality=${quality}`;
     
     const eventSource = new EventSource(downloadUrl);
     eventSourceRef.current = eventSource;
@@ -189,8 +186,8 @@ export default function DownloadCard({ initialUrl = "", onAddHistory }: Download
         if (data.step === "error") {
           eventSource.close();
           setStep("error");
-          setErrorMessage(data.error || "Conversion failed on the server.");
-          toast.error("Conversion failed.");
+          setErrorMessage(data.error || "Video processing failed on the server.");
+          toast.error("Download failed.");
           return;
         }
 
@@ -201,9 +198,8 @@ export default function DownloadCard({ initialUrl = "", onAddHistory }: Download
           eventSource.close();
           setFileId(data.fileId);
           setStep("finished");
-          toast.success("Conversion completed! Your file is ready.");
+          toast.success("Video download completed! Your file is ready.");
           
-          // Add to localStorage history via parent
           onAddHistory({
             id: metadata.id,
             title: metadata.title,
@@ -213,7 +209,7 @@ export default function DownloadCard({ initialUrl = "", onAddHistory }: Download
             format,
             quality,
             fileId: data.fileId,
-            type: "audio",
+            type: "video",
           });
         }
       } catch (err) {
@@ -235,7 +231,6 @@ export default function DownloadCard({ initialUrl = "", onAddHistory }: Download
     
     const downloadLink = `/api/download/file?id=${fileId}&title=${encodeURIComponent(metadata.title)}`;
     
-    // Trigger download programmatically
     const a = document.createElement("a");
     a.href = downloadLink;
     a.download = `${metadata.title}.${format}`;
@@ -243,7 +238,7 @@ export default function DownloadCard({ initialUrl = "", onAddHistory }: Download
     a.click();
     document.body.removeChild(a);
     
-    toast.success("Saving file to your device!");
+    toast.success("Saving video to your device!");
   };
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -275,14 +270,14 @@ export default function DownloadCard({ initialUrl = "", onAddHistory }: Download
       navigator
         .share({
           title: metadata.title,
-          text: `Download the audio of "${metadata.title}" by ${metadata.uploader} instantly!`,
+          text: `Download video "${metadata.title}" by ${metadata.uploader} instantly!`,
           url: window.location.href,
         })
         .then(() => toast.success("Shared successfully!"))
         .catch(() => {});
     } else {
       navigator.clipboard.writeText(window.location.href);
-      toast.success("YT Audio URL copied to clipboard!");
+      toast.success("YT Video URL copied to clipboard!");
     }
   };
 
@@ -294,14 +289,14 @@ export default function DownloadCard({ initialUrl = "", onAddHistory }: Download
       onDrop={handleDrop}
       className={`relative w-full rounded-[18px] border transition-all duration-300 ${
         isDragging
-          ? "border-green-500 bg-green-500/5 shadow-2xl shadow-green-500/10 scale-[1.01]"
+          ? "border-red-500 bg-red-500/5 shadow-2xl shadow-red-500/10 scale-[1.01]"
           : "border-white/[0.04] bg-[#18181B] shadow-2xl shadow-black/50"
       } p-6 sm:p-8`}
     >
       {/* Drag & Drop Overlay Hint */}
       {isDragging && (
-        <div className="absolute inset-0 z-30 flex flex-col items-center justify-center rounded-[18px] bg-[#18181B]/95 pointer-events-none border-2 border-dashed border-green-500">
-          <Download className="h-12 w-12 text-green-500 animate-bounce mb-3" />
+        <div className="absolute inset-0 z-30 flex flex-col items-center justify-center rounded-[18px] bg-[#18181B]/95 pointer-events-none border-2 border-dashed border-red-500">
+          <Download className="h-12 w-12 text-red-500 animate-bounce mb-3" />
           <h3 className="text-xl font-bold text-white">Drop YouTube Link Here</h3>
           <p className="text-sm text-zinc-500 mt-1">Release to auto-fetch video details</p>
         </div>
@@ -324,7 +319,7 @@ export default function DownloadCard({ initialUrl = "", onAddHistory }: Download
             onChange={handleUrlChange}
             placeholder="Paste YouTube URL... (e.g. https://www.youtube.com/watch?v=...)"
             disabled={step === "validate" || step === "downloading"}
-            className="w-full rounded-xl border border-white/[0.05] bg-zinc-900/60 py-3.5 pl-12 pr-28 text-sm text-white placeholder-zinc-500 outline-none transition-all focus:border-green-500/50 focus:bg-zinc-900 focus:ring-2 focus:ring-green-500/20 disabled:opacity-60"
+            className="w-full rounded-xl border border-white/[0.05] bg-zinc-900/60 py-3.5 pl-12 pr-28 text-sm text-white placeholder-zinc-500 outline-none transition-all focus:border-red-500/50 focus:bg-zinc-900 focus:ring-2 focus:ring-red-500/20 disabled:opacity-60"
             onKeyDown={(e) => {
               if (e.key === "Enter" && step !== "validate" && step !== "downloading") {
                 handleFetch();
@@ -365,7 +360,7 @@ export default function DownloadCard({ initialUrl = "", onAddHistory }: Download
             whileTap={{ scale: 0.99 }}
             onClick={() => handleFetch()}
             disabled={step === "validate" || !url.trim()}
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-green-600 font-semibold text-white shadow-lg shadow-green-500/25 transition-all hover:brightness-110 disabled:opacity-50 disabled:pointer-events-none"
+            className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-red-500 to-rose-600 font-semibold text-white shadow-lg shadow-red-500/25 transition-all hover:brightness-110 disabled:opacity-50 disabled:pointer-events-none"
           >
             {step === "validate" ? (
               <>
@@ -375,7 +370,7 @@ export default function DownloadCard({ initialUrl = "", onAddHistory }: Download
             ) : (
               <>
                 <Video className="h-4 w-4" />
-                Fetch Video
+                Fetch Video Details
               </>
             )}
           </motion.button>
@@ -424,14 +419,13 @@ export default function DownloadCard({ initialUrl = "", onAddHistory }: Download
             <div className="flex flex-col gap-5 sm:flex-row">
               {/* Thumbnail Container */}
               <div className="relative w-full rounded-xl overflow-hidden aspect-video sm:w-48 sm:h-28 bg-zinc-950 border border-white/[0.05] shrink-0">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={metadata.thumbnail}
                   alt={metadata.title}
                   className="w-full h-full object-cover"
                 />
                 <div className="absolute bottom-2 right-2 rounded bg-black/85 px-1.5 py-0.5 text-xs font-mono font-bold text-white flex items-center gap-1 shadow-md">
-                  <Clock className="h-3.5 w-3.5 text-green-500" />
+                  <Clock className="h-3.5 w-3.5 text-red-500" />
                   {metadata.durationString}
                 </div>
               </div>
@@ -442,7 +436,7 @@ export default function DownloadCard({ initialUrl = "", onAddHistory }: Download
                   <h3 className="text-base sm:text-lg font-bold text-white leading-snug line-clamp-2 hover:line-clamp-none transition-all">
                     {metadata.title}
                   </h3>
-                  <p className="text-sm font-semibold text-green-500 mt-1 sm:mt-0.5">
+                  <p className="text-sm font-semibold text-red-500 mt-1 sm:mt-0.5">
                     {metadata.uploader}
                   </p>
                 </div>
@@ -466,58 +460,57 @@ export default function DownloadCard({ initialUrl = "", onAddHistory }: Download
               {/* Format Toggle */}
               <div className="flex flex-col gap-2">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">
-                  Select Format
+                  Select Video Format
                 </span>
                 <div className="flex gap-2">
                   <button
-                    onClick={() => setFormat("mp3")}
+                    onClick={() => setFormat("mp4")}
                     className={`flex-1 py-2.5 rounded-lg text-xs font-bold transition-all border ${
-                      format === "mp3"
-                        ? "bg-zinc-900 border-green-500/40 text-green-400 shadow-md shadow-green-500/5"
+                      format === "mp4"
+                        ? "bg-zinc-900 border-red-500/40 text-red-400 shadow-md shadow-red-500/5"
                         : "bg-zinc-950/40 border-white/[0.03] text-zinc-400 hover:bg-zinc-900/60"
                     }`}
                   >
-                    MP3 (Compressed & Universal)
+                    MP4 (Highly Compatible)
                   </button>
                   <button
-                    onClick={() => setFormat("m4a")}
+                    onClick={() => setFormat("webm")}
                     className={`flex-1 py-2.5 rounded-lg text-xs font-bold transition-all border ${
-                      format === "m4a"
-                        ? "bg-zinc-900 border-green-500/40 text-green-400 shadow-md shadow-green-500/5"
+                      format === "webm"
+                        ? "bg-zinc-900 border-red-500/40 text-red-400 shadow-md shadow-red-500/5"
                         : "bg-zinc-950/40 border-white/[0.03] text-zinc-400 hover:bg-zinc-900/60"
                     }`}
                   >
-                    M4A (Native High-Fidelity)
+                    WebM (Modern & Optimized)
                   </button>
                 </div>
               </div>
 
-              {/* Quality Settings Grid (Only active for MP3 conversion) */}
-              <div className={`flex flex-col gap-2 transition-all ${format === "m4a" ? "opacity-40 pointer-events-none" : ""}`}>
+              {/* Quality Settings Grid */}
+              <div className="flex flex-col gap-2">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 flex items-center justify-between">
-                  <span>Choose Quality (MP3 only)</span>
-                  {format === "m4a" && <span className="text-green-500 lowercase text-[9px]">locked to native AAC quality</span>}
+                  <span>Select Quality / Resolution</span>
                 </span>
                 <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                  {(["128", "192", "256", "320"] as AudioQuality[]).map((q) => {
+                  {(["360", "480", "720", "1080"] as VideoQuality[]).map((q) => {
                     const qualityLabels: Record<string, string> = {
-                      "128": "Standard",
-                      "192": "Medium",
-                      "256": "High Quality",
-                      "320": "Ultra Quality",
+                      "360": "LQ / 360p",
+                      "480": "SD / 480p",
+                      "720": "HD / 720p",
+                      "1080": "Full HD / 1080p",
                     };
                     const isSelected = quality === q;
                     return (
                       <button
                         key={q}
                         onClick={() => setQuality(q)}
-                        className={`flex flex-col items-center justify-center py-2 px-1 rounded-lg border transition-all ${
+                        className={`flex flex-col items-center justify-center py-2.5 px-1 rounded-lg border transition-all ${
                           isSelected
-                            ? "bg-zinc-900 border-green-500/40 text-green-400 shadow-md"
+                            ? "bg-zinc-900 border-red-500/40 text-red-400 shadow-md"
                             : "bg-zinc-950/40 border-white/[0.03] text-zinc-500 hover:bg-zinc-900/60 hover:text-zinc-300"
                         }`}
                       >
-                        <span className="text-sm font-extrabold">{q}k</span>
+                        <span className="text-sm font-extrabold">{q}p</span>
                         <span className="text-[9px] mt-0.5 opacity-80">{qualityLabels[q]}</span>
                       </button>
                     );
@@ -532,10 +525,10 @@ export default function DownloadCard({ initialUrl = "", onAddHistory }: Download
                 whileHover={{ scale: 1.01 }}
                 whileTap={{ scale: 0.99 }}
                 onClick={startDownload}
-                className="flex-1 flex h-12 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-green-600 font-bold text-white shadow-lg shadow-green-500/25 transition-all hover:brightness-110"
+                className="flex-1 flex h-12 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-red-500 to-rose-600 font-bold text-white shadow-lg shadow-red-500/25 transition-all hover:brightness-110"
               >
                 <Download className="h-4.5 w-4.5" />
-                Convert & Download {format.toUpperCase()}
+                Merge & Download {format.toUpperCase()}
               </motion.button>
               
               <button
@@ -559,12 +552,12 @@ export default function DownloadCard({ initialUrl = "", onAddHistory }: Download
             className="mt-8 rounded-xl bg-zinc-900/60 border border-white/[0.03] p-6 space-y-6"
           >
             <div className="flex items-center gap-4">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-green-500/10 border border-green-500/20 text-green-500">
-                <Radio className="h-5 w-5 animate-pulse" />
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-red-500/10 border border-red-500/20 text-red-500">
+                <Play className="h-5 w-5 animate-pulse" />
               </div>
               <div className="min-w-0 flex-1">
                 <h4 className="text-sm font-semibold text-white truncate">
-                  Processing Audio Stream
+                  Processing Video Stream
                 </h4>
                 <p className="text-xs text-zinc-500 truncate mt-0.5">
                   {metadata?.title}
@@ -575,7 +568,7 @@ export default function DownloadCard({ initialUrl = "", onAddHistory }: Download
             {/* Progress Bar & Percentage */}
             <div className="space-y-2">
               <div className="flex items-center justify-between text-xs font-semibold">
-                <span className="text-green-500 animate-pulse">{progressMessage}</span>
+                <span className="text-red-500 animate-pulse">{progressMessage}</span>
                 <span className="text-white font-mono">{progress}%</span>
               </div>
               <div className="h-2 w-full bg-zinc-800 rounded-full overflow-hidden border border-white/[0.02]">
@@ -583,13 +576,13 @@ export default function DownloadCard({ initialUrl = "", onAddHistory }: Download
                   initial={{ width: "0%" }}
                   animate={{ width: `${progress}%` }}
                   transition={{ duration: 0.1 }}
-                  className="h-full bg-gradient-to-r from-emerald-400 to-green-500 rounded-full"
+                  className="h-full bg-gradient-to-r from-red-400 to-rose-500 rounded-full"
                 />
               </div>
             </div>
 
             <p className="text-center text-[10px] text-zinc-500">
-              Please keep this page open. Leaving now will cancel the conversion.
+              Please keep this page open. Merging audio and high-resolution video streams can take a minute.
             </p>
           </motion.div>
         )}
@@ -601,25 +594,23 @@ export default function DownloadCard({ initialUrl = "", onAddHistory }: Download
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0 }}
-            className="mt-8 rounded-xl bg-green-500/5 border border-green-500/25 p-6 text-center space-y-6"
+            className="mt-8 rounded-xl bg-red-500/5 border border-red-500/25 p-6 text-center space-y-6"
           >
             <div className="flex flex-col items-center">
-              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-green-500/10 text-green-500 border border-green-500/20 shadow-lg shadow-green-500/5 mb-3">
-                <CheckCircle2 className="h-8 w-8 text-green-500" />
+              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-red-500/10 text-red-500 border border-red-500/20 shadow-lg shadow-red-500/5 mb-3">
+                <CheckCircle2 className="h-8 w-8 text-red-500" />
               </div>
-              <h3 className="text-lg font-bold text-white">Audio Conversion Completed</h3>
+              <h3 className="text-lg font-bold text-white">Video Download Ready</h3>
               <p className="text-xs text-zinc-400 mt-1 max-w-sm mx-auto truncate">
                 {metadata.title}
               </p>
               <div className="flex items-center gap-2 mt-2">
-                <span className="rounded bg-green-500/10 border border-green-500/30 px-1.5 py-0.5 text-[10px] font-extrabold text-green-400">
+                <span className="rounded bg-red-500/10 border border-red-500/30 px-1.5 py-0.5 text-[10px] font-extrabold text-red-400">
                   {format.toUpperCase()}
                 </span>
-                {format === "mp3" && (
-                  <span className="text-[10px] text-zinc-500">
-                    {quality} kbps
-                  </span>
-                )}
+                <span className="text-[10px] text-zinc-500 font-semibold">
+                  {quality}p Quality
+                </span>
               </div>
             </div>
 
@@ -627,10 +618,10 @@ export default function DownloadCard({ initialUrl = "", onAddHistory }: Download
             <div className="flex gap-2 max-w-md mx-auto">
               <button
                 onClick={triggerSaveFile}
-                className="flex-1 flex h-12 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-green-600 font-bold text-white shadow-lg shadow-green-500/20 transition-all hover:brightness-110"
+                className="flex-1 flex h-12 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-red-500 to-rose-600 font-bold text-white shadow-lg shadow-red-500/20 transition-all hover:brightness-110"
               >
                 <Download className="h-4.5 w-4.5" />
-                Save {format.toUpperCase()}
+                Save {format.toUpperCase()} Video
               </button>
               
               <button
@@ -657,7 +648,7 @@ export default function DownloadCard({ initialUrl = "", onAddHistory }: Download
                 <AlertCircle className="h-5 w-5" />
               </div>
               <div className="flex-1 min-w-0">
-                <h4 className="text-sm font-semibold text-white">Conversion / Download Error</h4>
+                <h4 className="text-sm font-semibold text-white">Download Error</h4>
                 <p className="text-xs text-zinc-400 mt-1.5 leading-relaxed">
                   {errorMessage}
                 </p>

@@ -43,11 +43,27 @@ export async function GET(req: Request) {
       .trim() || "audio";
 
     // Set correct Content-Type
-    const contentType = ext === ".mp3" ? "audio/mpeg" : "audio/mp4";
+    const contentTypeMap: Record<string, string> = {
+      ".mp3": "audio/mpeg",
+      ".m4a": "audio/mp4",
+      ".mp4": "video/mp4",
+      ".webm": "video/webm",
+      ".mkv": "video/x-matroska",
+    };
+    const contentType = contentTypeMap[ext.toLowerCase()] || "application/octet-stream";
 
     // Standard way to handle unicode characters in content-disposition
-    const encodedFilename = encodeURIComponent(sanitizedTitle + ext);
-    const contentDisposition = `attachment; filename="${encodedFilename}"; filename*=UTF-8''${encodedFilename}`;
+    // filename parameter should be ASCII-only (we strip non-ASCII and double quotes, and truncate to 60 chars)
+    const asciiTitle = sanitizedTitle
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "") // remove accent marks
+      .replace(/[^\x20-\x7E]/g, "") // remove non-ASCII characters
+      .replace(/"/g, "'") // change double quotes to single quotes to prevent injection
+      .substring(0, 60) // truncate to safe length
+      .trim() || "download";
+
+    const encodedTitle = encodeURIComponent(sanitizedTitle);
+    const contentDisposition = `attachment; filename="${asciiTitle}${ext}"; filename*=UTF-8''${encodedTitle}${ext}`;
 
     // Convert node read stream to readable web stream
     const webStream = new ReadableStream({
