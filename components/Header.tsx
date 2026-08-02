@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Music, Video, Sun, Moon } from "lucide-react";
 import { motion } from "framer-motion";
 import toast from "react-hot-toast";
@@ -12,16 +12,48 @@ interface HeaderProps {
 }
 
 export default function Header({ onScrollToDownloader, activeTab = "audio" }: HeaderProps) {
+  const [theme, setTheme] = useState<"light" | "dark">("dark");
+
+  useEffect(() => {
+    const savedTheme = window.localStorage.getItem("theme") as "light" | "dark" | null;
+    if (savedTheme) {
+      setTheme(savedTheme);
+      if (savedTheme === "light") {
+        document.documentElement.setAttribute("data-theme", "light");
+      } else {
+        document.documentElement.removeAttribute("data-theme");
+      }
+    }
+  }, []);
+
   const toggleTheme = () => {
-    toast.success("Premium dark mode is active by default!", {
-      icon: "🌙",
-      style: {
-        background: "#18181B",
-        color: "#FAFAFA",
-        border: "1px solid rgba(255, 255, 255, 0.05)",
-        borderRadius: "12px",
-      },
-    });
+    const newTheme = theme === "light" ? "dark" : "light";
+    setTheme(newTheme);
+    window.localStorage.setItem("theme", newTheme);
+    
+    if (newTheme === "light") {
+      document.documentElement.setAttribute("data-theme", "light");
+      toast.success("Light theme activated!", {
+        icon: "☀️",
+        style: {
+          background: "#FFFFFF",
+          color: "#09090B",
+          border: "1px solid rgba(9, 9, 11, 0.08)",
+          borderRadius: "12px",
+        },
+      });
+    } else {
+      document.documentElement.removeAttribute("data-theme");
+      toast.success("Premium dark theme activated!", {
+        icon: "🌙",
+        style: {
+          background: "#18181B",
+          color: "#FAFAFA",
+          border: "1px solid rgba(255, 255, 255, 0.05)",
+          borderRadius: "12px",
+        },
+      });
+    }
   };
 
   const isVideo = activeTab === "video";
@@ -98,31 +130,14 @@ export default function Header({ onScrollToDownloader, activeTab = "audio" }: He
           <button
             onClick={toggleTheme}
             className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/[0.05] bg-zinc-900 text-zinc-400 transition-all hover:bg-zinc-800 hover:text-white focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 focus:ring-offset-[#09090B]"
-            aria-label="Toggle dark mode"
+            aria-label={theme === "light" ? "Switch to dark theme" : "Switch to light theme"}
           >
-            <Moon className="h-4 w-4" />
+            {theme === "light" ? (
+              <Moon className="h-4 w-4 text-zinc-400" />
+            ) : (
+              <Sun className="h-4 w-4 text-amber-400" />
+            )}
           </button>
-          
-          <a
-            href="https://github.com"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="hidden sm:flex h-9 w-9 items-center justify-center rounded-xl border border-white/[0.05] bg-zinc-900 text-zinc-400 transition-all hover:bg-zinc-800 hover:text-white"
-            aria-label="GitHub repository"
-          >
-            <svg
-              className="h-4 w-4"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4" />
-              <path d="M9 18c-4.51 2-5-2-7-2" />
-            </svg>
-          </a>
 
           <motion.button
             whileHover={{ scale: 1.02 }}
