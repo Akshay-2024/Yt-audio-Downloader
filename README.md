@@ -1,4 +1,4 @@
-# 🎵 YT Audio Downloader Pro
+# 🎵🎬 YT Audio/Video Downloader Pro
 
 <div align="center">
   <img src="public/icon-512.png" alt="YT Audio Downloader Pro Logo" width="128" height="128" style="border-radius: 20%; box-shadow: 0 10px 25px rgba(0,0,0,0.3);" />
