@@ -1,104 +1,105 @@
 # 🎵 YT Audio Downloader Pro
 
-A premium, high-fidelity, and ad-free YouTube Audio Downloader built with **Next.js 16 (App Router)**, **Tailwind CSS v4**, **TypeScript**, and powered by **yt-dlp** and **FFmpeg**. 
+<div align="center">
+  <img src="public/icon-512.png" alt="YT Audio Downloader Pro Logo" width="128" height="128" style="border-radius: 20%; box-shadow: 0 10px 25px rgba(0,0,0,0.3);" />
+  
+  <h3>An ultra-premium, ad-free, high-fidelity YouTube Audio & Video Downloader</h3>
 
-This application supports Progressive Web App (PWA) installation, download history tracking, custom audio format selections, and dynamic dark mode styling.
+  [![Next.js](https://img.shields.io/badge/Next.js-16.2.12-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
+  [![Tailwind CSS v4](https://img.shields.io/badge/Tailwind_CSS_v4-38BDF8?style=for-the-badge&logo=tailwind-css)](https://tailwindcss.com/)
+  [![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
+  [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
+</div>
 
 ---
 
 ## ✨ Features
 
-- 🎧 **Premium Audio Formats**: Download as high-quality **MP3 (up to 320kbps)** or native **M4A**.
-- 🚫 **100% Ad-Free**: Enjoy clean, uninterrupted audio conversion with no popups or advertisements.
-- 📱 **PWA Support**: Install the app directly onto your mobile home screen or desktop application list.
-- ⏳ **Anti-Hang Safekeeping**: Smart server-side process timeouts prevent backend locks and resource leaks.
-- 📝 **Download History**: Keep track of your past conversions locally in your browser storage.
-- 🛡️ **Container Ready**: Equipped with a custom `Dockerfile` to deploy seamlessly to any container hosting provider.
+- 🎧 **Premium Audio Formats**: Extract and download audio files in ultra-premium **MP3 (up to 320kbps)** or native high-fidelity **M4A (AAC)** formats.
+- 📹 **Video Downloader**: Download MP4/WebM videos in crisp HD resolutions (up to 1080p) with seamless server-side audio merging.
+- 🚫 **100% Ad-Free**: No redirects, pop-ups, or spammy scripts—enjoy a clean, uninterrupted media-downloading experience.
+- 🌓 **Dynamic Theme Selector**: Switch seamlessly between a sleek glassmorphism **Dark Theme** and a clean, high-contrast **Light Theme** with persistent preferences.
+- 📱 **Progressive Web App (PWA)**: Fully installable as an app on your mobile home screen or desktop application launcher.
+- ⏳ **Timeout Prevention & Proactive Cleanup**: Handles connections safely without hanging server processes, automatically deleting temporary files to keep server resources clean.
+- 📝 **Local Download History**: Keep track of your last 10 conversions locally in your browser session storage.
 
 ---
 
 ## 🚀 Running Locally (Recommended)
 
-Running the application on your local machine is the **easiest and most reliable way** to download music. Since you are using your home residential IP address, YouTube will not block your requests.
+Running the downloader on your local machine is the **most stable, speed-unlimited, and reliable method**. Since it routes requests through your residential connection, it completely bypasses YouTube's datacenter IP blocks.
 
 ### 📋 Prerequisites
 
 Ensure you have the following installed on your system:
 
 1. **Node.js** (v18.x or newer)
-2. **Python 3** (Required by `yt-dlp`)
-3. **FFmpeg** (Required for audio transcoding)
+2. **Python 3** (Required by `yt-dlp` to run download scripts)
+3. **FFmpeg** (Required for converting and stitching video/audio tracks)
 
 #### How to install FFmpeg:
-- **Windows**: Install via scoop (`scoop install ffmpeg`) or download from [gyan.dev](https://www.gyan.dev/ffmpeg/builds/) and add the `bin` folder to your system `PATH`.
-- **macOS**: Install via Homebrew (`brew install ffmpeg`).
-- **Linux**: Install via apt (`sudo apt install ffmpeg`).
+- **Windows**: Install via scoop (`scoop install ffmpeg`) or download the builds from [gyan.dev](https://www.gyan.dev/ffmpeg/builds/) and append the `bin` folder path to your environment's `PATH`.
+- **macOS**: Install via Homebrew: `brew install ffmpeg`
+- **Linux**: Install via package manager: `sudo apt install ffmpeg`
 
-### ⚙️ Installation & Startup
+### ⚙️ Installation & Development Startup
 
-1. Clone your repository:
+1. **Clone the repository:**
    ```bash
    git clone https://github.com/Akshay-2024/Yt-audio-Downloader.git
    cd Yt-audio-Downloader
    ```
 
-2. Install dependencies:
+2. **Install dependencies:**
    ```bash
    npm install
    ```
 
-3. Run the development server:
+3. **Launch the development server:**
    ```bash
    npm run dev
    ```
 
-4. Open your browser and navigate to:
-   👉 **`http://localhost:3000`**
+4. **Access the application:**
+   Open your browser to: **`http://localhost:3000`**
 
 ---
 
-## ☁️ Deployment (Cloud Hosting)
+## 🐳 Cloud Deployment (Docker)
 
-This application is fully containerized and ready to deploy on free cloud servers like **Render.com** or **Koyeb.com**.
+This repository comes pre-packaged with a production-grade `Dockerfile`. You can deploy this easily to containerized hosting platforms such as **Koyeb** or **Render**.
 
-### 🐳 Deploying via Docker (Render / Koyeb)
-
-Both Render and Koyeb will automatically read the included `Dockerfile` and configure your environment.
-
-1. Connect your GitHub repository to **Render.com** or **Koyeb.com**.
-2. Create a new **Web Service**.
-3. Select **Docker** as your runtime/builder.
-4. Choose the **Free** instance tier.
-5. Click **Deploy**.
+### 🛠️ Container Configuration
+- **Port**: Exposes port `3000`
+- **Base Image**: Uses a slim Node environment, installing Python and compiling the latest stable release of `FFmpeg` automatically during deployment.
 
 ---
 
-## 🛡️ Bypassing YouTube Datacenter Blocks (Proxies)
+## 🛡️ Bypassing YouTube Datacenter Blocks (Proxy Setup)
 
-When hosting this app on a cloud server, YouTube will block requests with a *"Sign in to confirm you are not a bot"* challenge because it originates from a cloud data-center IP.
+When deploying this application on hosting platforms (like Render or Koyeb), YouTube might restrict downloads with a bot challenge (e.g., *"Sign in to confirm you are not a bot"*).
 
-To bypass this restriction on your public site:
+To fix this on public servers:
 
-1. Register a proxy account (e.g., from [Webshare.io](https://www.webshare.io/) or another provider).
-2. Get your residential proxy URL in this format:
-   `http://username:password@proxy-host:port`
-3. Add it as an environment variable in your host dashboard:
+1. Obtain residential or datacenter proxies (e.g. from [Webshare](https://www.webshare.io/) or other providers).
+2. Configure the proxy URL using the environment variable:
    - **Key**: `PROXY_URL`
    - **Value**: `http://username:password@proxy-host:port`
-4. Save changes and redeploy. The app will automatically route all YouTube traffic through the proxy, eliminating all blocks!
+3. The server-side downloader will automatically detect the variable and route traffic securely through your proxy.
 
 ---
 
 ## 🛠️ Tech Stack
 
-- **Framework**: Next.js 16 (App Router)
-- **Styling**: Tailwind CSS v4 + Glassmorphism details
+- **Frontend Framework**: Next.js 16 (App Router)
+- **Styling**: Tailwind CSS v4 & Glassmorphism Design
+- **Animations**: Framer Motion
+- **Core Downloader**: `yt-dlp`
+- **Transcoding & Merging**: `FFmpeg`
 - **Language**: TypeScript
-- **Binary Utilities**: `yt-dlp` (Core Audio Extractor) + `FFmpeg` (Transcoder)
-- **Deployment**: Docker containerization
 
 ---
 
 ## 📄 License
 
-This project is open-source and available under the [MIT License](LICENSE).
+Distributed under the MIT License. See [LICENSE](LICENSE) for more information.
